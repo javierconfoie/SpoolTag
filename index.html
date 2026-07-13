@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<!--
+  SpoolCard — Bambu Lab-style filament label generator
+  Copyright (C) 2026 javierconfoie (https://github.com/javierconfoie)
+  Licensed under the GNU AGPL-3.0 — see LICENSE for full terms.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){var t=localStorage.getItem('bl-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpoolCard</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <script src="assets/vendor/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page-header">
+  <img src="assets/logo.png" alt="SpoolCard" style="height:72px;width:auto;flex-shrink:0">
+  <div>
+    <h1><span class="title-spool">Spool</span><span class="title-card">Card</span></h1>
+    <p>Filament label generator &middot; BambuLab format &middot; 120 &times; 23 mm true scale</p>
+  </div>
+</div>
+
+<div class="theme-switch-wrap">
+  <span class="theme-icon-sun">&#9728;&#65039;</span>
+  <label class="theme-switch" title="Dark mode">
+    <input type="checkbox" id="theme-toggle-input" onchange="toggleTheme(this.checked)">
+    <span class="theme-switch-slider"></span>
+  </label>
+  <span class="theme-icon-moon">&#127769;</span>
+</div>
+
+<div class="app">
+
+  <!-- ══ FORM ══ -->
+  <div class="panel form-panel">
+    <p class="panel-title">Label parameters</p>
+
+    <div class="form-col">
+    <div class="fsec">Brand Logo</div>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.83rem;color:#555;margin-bottom:8px">
+      <input type="checkbox" id="f-show-logo" checked onchange="toggleLogo(this.checked)">
+      Show brand logo
+    </label>
+    <div id="brand-logo-section" style="margin-bottom:10px">
+      <div id="brand-drop-zone" class="drop-zone"
+           onclick="document.getElementById('f-brand-file').click()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.5" style="color:#ccc;display:block;margin:0 auto 4px">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p style="font-size:.78rem;color:#888;margin:0">BambuLab logo <span style="color:#bbb;font-size:.72rem">(default)</span></p>
+        <p style="font-size:.72rem;color:#bbb;margin:2px 0 0">Drop or click to replace · PNG · JPG · SVG · WebP</p>
+        <input type="file" id="f-brand-file" accept="image/*" style="display:none"
+               onchange="onBrandLogoFileChange(this)">
+      </div>
+      <div id="brand-preview-box" style="display:none;margin-top:8px">
+        <img id="brand-preview-img"
+             style="max-height:44px;max-width:100%;object-fit:contain;display:block;margin:0 auto;border-radius:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px">
+          <span id="brand-filename" style="font-size:.72rem;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px"></span>
+          <button class="btn-clear-logo" onclick="clearBrandLogo()">Remove</button>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label style="display:flex;justify-content:space-between;font-size:.75rem;color:#888">
+          <span>Rotation</span><span id="brand-rotation-val" style="color:#4a9eff;font-weight:600">0°</span>
+        </label>
+        <input type="range" id="f-brand-rotation" min="0" max="360" value="0" step="90"
+               style="width:100%;margin-top:3px" oninput="onBrandLogoRotation(this.value)">
+      </div>
+      <div style="margin-top:6px">
+        <label style="display:flex;justify-content:space-between;font-size:.75rem;color:#888">
+          <span>Size</span><span id="brand-scale-val" style="color:#4a9eff;font-weight:600">100%</span>
+        </label>
+        <input type="range" id="f-brand-scale" min="10" max="200" value="100" step="5"
+               style="width:100%;margin-top:3px" oninput="onBrandLogoScale(this.value)">
+      </div>
+    </div>
+    <div class="fsec">Material</div>
+    <div class="frow">
+      <div>
+        <label>Type</label>
+        <div class="combo-wrap">
+          <input type="text" id="f-type" value="PLA" autocomplete="off"
+                 placeholder="e.g. PLA"
+                 oninput="comboFilter('type');onTypeChange()"
+                 onfocus="comboOpen('type')"
+                 onkeydown="comboKey(event,'type')">
+          <button class="combo-arrow" type="button" tabindex="-1"
+                  onclick="comboToggle('type')">
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="combo-list" id="combo-list-type" style="display:none"></div>
+        </div>
+      </div>
+      <div>
+        <label>Series</label>
+        <div class="combo-wrap">
+          <input type="text" id="f-series" value="Basic" autocomplete="off"
+                 placeholder="e.g. Basic"
+                 oninput="comboFilter('series');onSeriesChange()"
+                 onfocus="comboOpen('series')"
+                 onkeydown="comboKey(event,'series')">
+          <button class="combo-arrow" type="button" tabindex="-1"
+                  onclick="comboToggle('series')">
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="combo-list" id="combo-list-series" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsec">Color</div>
+    <div id="color-slots"></div>
+    <button class="btn-add-color" id="btn-add-color" onclick="addColorSlot()">+ Add color (max. 4)</button>
+    <div style="display:flex;gap:12px;margin-top:6px;margin-bottom:4px;font-size:.8rem;color:#555;align-items:center">
+      <span style="font-size:.65rem;text-transform:uppercase;letter-spacing:.7px;color:#bbb;flex-shrink:0">Style</span>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:4px">
+        <input type="radio" name="color-display" value="pie" checked onchange="setColorMode('pie')"> Pie
+      </label>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:4px">
+        <input type="radio" name="color-display" value="gradient" onchange="setColorMode('gradient')"> Gradient &uarr;
+      </label>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;color:#555;margin-bottom:8px">
+      <input type="checkbox" id="f-white-outline" onchange="render()">
+      Outline for white colors
+    </label>
+    <div id="color-palette" class="color-palette"></div>
+    </div><!-- /form-col left -->
+
+    <div class="form-col">
+    <div class="fsec">Specifications</div>
+    <div style="display:flex;gap:16px;margin-bottom:10px;font-size:.83rem;color:#555">
+      <label style="cursor:pointer;display:flex;align-items:center;gap:5px">
+        <input type="radio" name="center-mode" value="specs" checked
+               onchange="setCenterMode('specs')"> Specifications
+      </label>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:5px">
+        <input type="radio" name="center-mode" value="logo"
+               onchange="setCenterMode('logo')"> Custom Image
+      </label>
+    </div>
+    <div id="logo-upload-section" style="display:none;margin-bottom:10px">
+      <div id="logo-drop-zone" class="drop-zone"
+           onclick="document.getElementById('f-logo-file').click()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.5" style="color:#ccc;display:block;margin:0 auto 6px">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p style="font-size:.82rem;color:#888;margin:0">Drop image here</p>
+        <p style="font-size:.73rem;color:#bbb;margin:3px 0 0">PNG · JPG · SVG · WebP</p>
+        <input type="file" id="f-logo-file" accept="image/*" style="display:none"
+               onchange="onLogoFileChange(this)">
+      </div>
+      <div id="logo-preview-box" style="display:none;margin-top:8px">
+        <img id="logo-preview-img"
+             style="max-height:56px;max-width:100%;object-fit:contain;display:block;margin:0 auto;border-radius:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span id="logo-filename"
+                style="font-size:.72rem;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px"></span>
+          <button class="btn-clear-logo" onclick="clearLogo()">Remove</button>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label style="display:flex;justify-content:space-between;font-size:.75rem;color:#888">
+          <span>Rotation</span>
+          <span id="rotation-val" style="color:#4a9eff;font-weight:600">0°</span>
+        </label>
+        <input type="range" id="f-logo-rotation" min="0" max="360" value="0" step="90"
+               style="width:100%;margin-top:4px" oninput="onLogoRotation(this.value)">
+      </div>
+      <div style="margin-top:8px">
+        <label style="display:flex;justify-content:space-between;font-size:.75rem;color:#888">
+          <span>Size</span>
+          <span id="scale-val" style="color:#4a9eff;font-weight:600">100%</span>
+        </label>
+        <input type="range" id="f-logo-scale" min="10" max="200" value="100" step="5"
+               style="width:100%;margin-top:4px" oninput="onLogoScale(this.value)">
+      </div>
+    </div>
+    <div id="specs-inputs">
+
+      <div class="spec-row-wrap">
+        <input type="checkbox" id="spec-diam-on" checked onchange="render()">
+        <div class="frow">
+          <div><label>Diameter (mm)</label>
+            <input type="text" id="f-diam" value="1.75" oninput="render()"></div>
+          <div><label>Tolerance ± (mm)</label>
+            <input type="text" id="f-tol" value="0.03" oninput="render()"></div>
+        </div>
+      </div>
+
+      <div class="spec-row-wrap">
+        <input type="checkbox" id="spec-temp-on" checked onchange="render()">
+        <div class="frow">
+          <div><label>Min. print temp (°C)</label>
+            <input type="text" id="f-tmin" value="190" oninput="render()"></div>
+          <div><label>Max. print temp (°C)</label>
+            <input type="text" id="f-tmax" value="230" oninput="render()"></div>
+        </div>
+      </div>
+
+      <div class="spec-row-wrap">
+        <input type="checkbox" id="spec-weight-on" checked onchange="render()">
+        <div class="spec-single"><label>Net weight</label>
+          <input type="text" id="f-weight" value="1 kg" oninput="render()"></div>
+      </div>
+
+      <div class="spec-row-wrap">
+        <input type="checkbox" id="spec-code-on" checked onchange="render()">
+        <div class="spec-single"><label>Filament code</label>
+          <input type="text" id="f-code" value="" placeholder="e.g. 10102" oninput="render()"></div>
+      </div>
+
+      <div class="spec-row-wrap">
+        <input type="checkbox" id="spec-dry-on" checked onchange="render()">
+        <div class="frow">
+          <div><label>Drying temp (°C)</label>
+            <input type="text" id="f-dtemp" value="55" oninput="render()"></div>
+          <div><label>Drying time (h)</label>
+            <input type="text" id="f-dtime" value="8" oninput="render()"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:4px">
+        <div id="custom-spec-list"></div>
+        <button class="btn-add-color" onclick="addCustomSpec()" style="margin-top:4px">
+          + Add custom field
+        </button>
+      </div>
+
+    </div><!-- /specs-inputs -->
+
+    <div class="fsec">Print</div>
+    <div>
+      <button class="btn-print" id="btn-print-img" onclick="printAsImage()">Print label</button>
+      <button class="btn-add-queue" id="btn-add-queue" onclick="addToQueue()">+ Add to queue</button>
+    </div>
+    <div class="fsec">Export</div>
+    <div>
+      <button class="btn-export" id="btn-export" onclick="exportPNG()">Export PNG (high resolution)</button>
+    </div>
+    </div><!-- /form-col right -->
+  </div>
+
+  <!-- ══ PREVIEW ══ -->
+  <div class="panel preview-panel">
+    <p class="panel-title">Preview (2× scale)</p>
+    <div class="preview-bg">
+      <div class="label-zoom">
+        <div class="bambu-label" id="the-label"></div>
+      </div>
+    </div>
+    <p class="hint">
+      When printing, select <strong>No scaling / 100%</strong> in browser print options.
+      Label will print at 120 × 23 mm.
+    </p>
+    <label class="hint hint-guide" style="cursor:pointer">
+      <input type="checkbox" id="f-show-guide" checked onchange="render()">
+      <span class="hint-dash"></span>
+      The dashed line is the visible area once mounted (the holder's ~1mm rim covers the
+      rest) — it's only a guide and won't be printed.
+    </label>
+
+    <!-- ══ PRINT QUEUE ══ -->
+    <div id="queue-section" style="margin-top:16px;border-top:1px solid #eee;padding-top:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span class="queue-header-title">Print queue (<span id="queue-count">0</span>)</span>
+        <button class="btn-queue-io" id="btn-queue-export" onclick="exportQueueJSON()" disabled>Export JSON</button>
+        <button class="btn-queue-io" onclick="document.getElementById('f-queue-import').click()">Import JSON</button>
+        <input type="file" id="f-queue-import" accept="application/json,.json" style="display:none" onchange="importQueueJSON(this)">
+        <button class="btn-queue-print" id="btn-queue-print" onclick="printQueue()" disabled>Print all</button>
+        <button class="btn-queue-clear" id="btn-queue-clear" onclick="clearQueue()" disabled>Clear</button>
+      </div>
+      <div class="queue-list" id="queue-list">
+      <p class="queue-empty">Queue up several labels to print them all at once — use “+ Add to queue” below.</p>
+  </div>
+
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<script src="js/colors-data.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

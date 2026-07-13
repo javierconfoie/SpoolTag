@@ -1,0 +1,13 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+*.code-workspace
+.claude/settings.local.json
+
+# Backups locales
+*.bak
