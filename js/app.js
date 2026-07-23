@@ -258,15 +258,15 @@ function buildColorPalette() {
     const shadow = isLightColor(c.hex)
       ? 'box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18);' : '';
     return `<div class="color-swatch"
-      data-hex="${c.hex}" data-name="${esc(c.name)}"
+      data-hex="${c.hex}" data-name="${esc(c.name)}" data-code="${esc(c.code || '')}"
       style="background:${c.hex};${shadow}"
       title="${esc(c.name)}"
-      onclick="selectColor(this.dataset.hex,this.dataset.name)"></div>`;
+      onclick="selectColor(this.dataset.hex,this.dataset.name,this.dataset.code)"></div>`;
   }).join('');
   updateSwatchSelection();
 }
 
-function selectColor(hex, name) {
+function selectColor(hex, name, code) {
   colorSlots[activeSlot].hex = hex;
   colorSlots[activeSlot].name = name;
   const slots = document.querySelectorAll('.color-slot');
@@ -274,6 +274,7 @@ function selectColor(hex, name) {
     slots[activeSlot].querySelector('input[type=color]').value = hex;
     slots[activeSlot].querySelector('input[type=text]').value = name;
   }
+  if (code) document.getElementById('f-code').value = code;
   updateSwatchSelection();
   suggestWhiteOutline();
   render();
@@ -320,7 +321,7 @@ function logoSVG() {
 
 /* ── Custom combobox ───────────────────────────────── */
 const COMBO_ALL = {
-  type:   Object.keys(SERIES_OPTIONS),
+  type:   Object.keys(SERIES_OPTIONS).sort(),
   series: ['Basic'],   // updated dynamically
 };
 let comboKbIdx = { type: -1, series: -1 };
@@ -393,26 +394,33 @@ function getSeries() {
 }
 
 function updateSeriesOptions(type) {
-  COMBO_ALL.series = SERIES_OPTIONS[type] || ['Basic'];
+  const original = SERIES_OPTIONS[type] || ['Basic'];
+  COMBO_ALL.series = [...original].sort();
   const s = document.getElementById('f-series');
-  if (!COMBO_ALL.series.includes(s.value)) s.value = COMBO_ALL.series[0];
+  if (!COMBO_ALL.series.includes(s.value)) s.value = original[0];
+}
+
+function applyPresets() {
+  const p = PRESETS[getType()];
+  if (!p) return;
+  const override = SERIES_PRESETS[getType()]?.[getSeries()] || {};
+  const merged = { ...p, ...override };
+  document.getElementById('f-tmin').value  = merged.tmin;
+  document.getElementById('f-tmax').value  = merged.tmax;
+  document.getElementById('f-dtemp').value = merged.dtemp;
+  document.getElementById('f-dtime').value = merged.dtime;
 }
 
 function onSeriesChange() {
+  applyPresets();
   buildColorPalette();
   render();
 }
 
 function onTypeChange() {
   const t = getType();
-  const p = PRESETS[t];
-  if (p) {
-    document.getElementById('f-tmin').value  = p.tmin;
-    document.getElementById('f-tmax').value  = p.tmax;
-    document.getElementById('f-dtemp').value = p.dtemp;
-    document.getElementById('f-dtime').value = p.dtime;
-  }
   updateSeriesOptions(t);
+  applyPresets();
   buildColorPalette();
   render();
 }
